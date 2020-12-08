@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    namespace：用来区分Mapper接口，Mapper接口的全路径。相当于包结构的概念，emm。
+-->
+<mapper namespace="com.gg.mappers.UserMapper">
+    <!--开启二级缓存的使用-->
+    <cache />
+    <!--
+        id：对应的Mapper接口中的方法名
+        resultType:当前方法的返回值（提供全限定路径）
+        userCache:是否放到二级缓存中
+     -->
+    <select id="findAll" resultType="com.gg.entity.User" useCache="true">
+        /* 查询所有的用户信息SQL: */
+        select * from user;
+    </select>
+
+    <!--
+        通过ID查询user表
+        id：方法名称，必须和mapper接口中的方法名称相同
+        resultType：方法返回值类型，全路径
+        parameterType：方法参数类型，全路径
+
+        sql中不能使用？作为占位符，使用#{}来编写
+
+        parameterType中基础数据类型可以不用写全路径，可以直接写小写：如int，string，double
+     -->
+    <select id="findByID" resultType="com.gg.entity.User" parameterType="java.lang.Integer">
+        select * from user where id = #{ID};
+    </select>
+
+    <!--
+        用来新增用户
+        #{OGNL}表达式，对象图导航语言，表达式语言。语法和EL表达式非常类似。
+        EL表达式只能在JSP页面上使用。OGNL表达式不仅能在页面中使用，也能在配置文件中使用
+    -->
+    <insert id="add" parameterType="com.gg.entity.User" >
+        insert into user (sAccountNO,sPassword,sName,nStatusID) values (#{sAccountNO},#{sPassword},#{sName},#{nStatusID});
+    </insert>
+
+    <!-- 根据ID修改用户数据 -->
+    <update id="updateByID" parameterType="com.gg.entity.User" >
+        update user set sAccountNO = #{sAccountNO},sPassword = #{sPassword},sName = #{sName} where ID = #{ID};
+    </update>
+
+    <!-- 通过ID删除数据 -->
+    <delete id="deleteByID" parameterType="java.lang.Integer">
+        delete from user where id = #{ID};
+    </delete>
+
+    <!--
+        通过用户名模糊查询数据
+        模糊查询没有拼接%，需要传入参数的时候有%
+        like ? 有占位符，使用的是预编译的方式，防止sql注入的问题
+    -->
+    <select id="findByNameLike" resultType="com.gg.entity.User" parameterType="java.lang.String">
+        select * from user where sName like #{sName};
+    </select>
+
+    <!--
+        模糊查询，在写sql的时候添加%号，这样传参的时候就不用%号了
+        没有占位符，使用的是sqk拼接，传入的参入有可能会该片sql的格式
+
+        #{} 和 ${}之间的区别：
+            1、方法的参数传入的类型为引用数据类型时，如User对象
+                #{} ${}都可以
+
+            2、方法的参数是普通数据类型时，如果int，String，Double
+                #{名称可以是任意的}  ${必须是value} 回去从String中找对应的get方法导致报错
+
+     -->
+    <select id="findByNameLike2" resultType="com.gg.entity.User" parameterType="java.lang.String">
+        select * from user where sName like '%${value}%';
+    </select>
+
+    <!-- 查询数据的条数 -->
+    <select id="findCount" resultType="java.lang.Integer">
+        select count(*) from user;
+    </select>
+
+    <!-- 通过使用VO来查询数据 -->
+    <select id="findByVO" parameterType="com.gg.entity.UserVO" resultType="User">
+        select * from user where sName like '%${userDetail.address}%' and sAccountNO = #{user.sAccountNO}
+    </select>
+    
+    <!-- 通过配置resultMap来查询数据-->
+    <select id="findByResultMap" resultMap="userMap">
+        select ID _ID, sAccountNO _sAccountNO, sPassword _sPassword, sName _sName, nStatusID _nStatusID from user
+    </select>
+
+    <!--
+        if拼接查询
+        拼接SQL语句，判断属性的值是否为null，使用if标签
+            test="OGNL表达式"，判断条件
+        where标签能够解决拼接sql是时的and和where之间的问题
+    -->
+    <select id="findByIf" parameterType="user" resultType="user">
+        select * from user
+        <where>
+            <if test="sName != null and sName != '' ">
+                and sName like #{sName}
+            </if><if test="sAccountNO != null and sAccountNO != '' ">
+                and sAccountNO = #{sAccountNO}
+            </if>
+        </where>
+    </select>
+
+    <!--
+        通过Foreach标签进行拼接sql
+        foreach标签属性：
+        collection="要遍历的集合";
+        open="开始";
+        close="结束";
+        separator="切割符号";
+        item="遍历后变量";
+        index="下标值";
+    -->
+    <!--<select id="findByForeach" resultType="user" parameterType="user">
+        select * from user
+        <where>
+            <foreach collection="IDs" open=" id = " separator=" or id = " item="id">
+                #{id}
+            </foreach>
+        </where>
+    </select>-->
+    <select id="findByForeach" resultType="user" parameterType="user">
+        select <include refid="columnSql"/> from user
+        <where>
+            <foreach collection="IDs" open=" id in (" separator="," close=")" item="id">
+                #{id}
+            </foreach>
+        </where>
+    </select>
+
+
+    <!--
+        配置resultMap,用来进行数据封装
+        id="唯一的名称，用来引用该resultMap"
+        type="进行封装的数据类型"
+     -->
+    <resultMap id="userMap" type="com.gg.entity.User">
+        <!--
+            property="JavaBean中的属性,属性的名字要一致包括大小写"
+            column="表中的字段"
+        -->
+        <result property="ID" column="_ID"/>
+        <result property="sAccountNO" column="_sAccountNO"/>
+        <result property="sPassword" column="_sPassword"/>
+        <result property="sName" column="_sName"/>
+        <result property="nStatusID" column="_nStatusID"/>
+    </resultMap>
+
+    <sql id="columnSql" >
+        ID,sAccountNO,sPassword,sName,nStatusID
+    </sql>
+
+    <!--  用户表的列名 -->
+    <sql id="userColumnSql" >
+        u.ID userID, u.sAccountNO, u.sPassword, u.sName, u.nStatusID
+    </sql>
+
+    <!--笔记表的列名-->
+    <sql id="noteColumnSql" >
+        n.ID noteID, n.sTitle, n.ltText, n.nInputUserID, n.dtInputDate, n.dtModifyDate, n.nStatusID
+    </sql>
+
+    <!-- 通过一对多的关系查询用户信息 -->
+    <select id="findAllByOneToMore" resultMap="userAndNoteMap">
+        select <include refid="userColumnSql"/>, <include refid="noteColumnSql"/> from user u, note n where u.id = n.nInputUserID and u.nStatusID > 0 and n.nStatusID > 0
+    </select>
+
+    <!-- 用户和笔记两表关联配置 -->
+    <resultMap id="userAndNoteMap" type="user">
+        <result property="ID" column="userID"/>
+        <result property="sAccountNO" column="sAccountNO"/>
+        <result property="sPassword" column="sPassword"/>
+        <result property="sName" column="sName"/>
+        <result property="nStatusID" column="nStatusID"/>
+        <!-- property="属性名" ofType="集合里面类的类型" -->
+        <collection property="noteList" ofType="note">
+            <result property="ID" column="noteID"/>
+            <result property="sTitle" column="sTitle"/>
+            <result property="ltText" column="ltText"/>
+            <result property="nInputUserID" column="nInputUserID"/>
+            <result property="dtInputDate" column="dtInputDate"/>
+            <result property="dtModifyDate" column="dtModifyDate"/>
+            <result property="nStatusID" column="nStatusID"/>
+        </collection>
+    </resultMap>
+
+    <!-- 查询全部数据 -->
+    <select id="findAllRole" resultMap="findAllMap">
+        select <include refid="roleColumnSql2"/>,<include refid="userColumnSql2"/> from user u, role r, user_role ur where u.id = ur.userid and r.id = ur.roleid and u.nStatusID > 0 and r.nStatusID > 0 and ur.nStatusID > 0
+    </select>
+
+    <!-- 结果集封装 -->
+    <resultMap id="findAllMap" type="user">
+        <result property="ID" column="u_ID"/>
+        <result property="sAccountNO" column="u_sAccountNO"/>
+        <result property="sPassword" column="u_sPassword"/>
+        <result property="sName" column="u_sName"/>
+        <result property="nStatusID" column="u_nStatusID"/>
+        <collection property="roleList" ofType="role">
+            <result property="ID" column="r_ID"/>
+            <result property="sRoleName" column="r_sRoleName"/>
+            <result property="sRoleDescription" column="r_sRoleDescription"/>
+            <result property="nInputUserID" column="r_nInputUserID"/>
+            <result property="dtInputDate" column="r_dtInputDate"/>
+            <result property="nModifyID" column="r_nModifyID"/>
+            <result property="dtModifyDate" column="r_dtModifyDate"/>
+            <result property="nStatusID" column="r_nStatusID"/>
+        </collection>
+    </resultMap>
+
+    <!-- 角色表列名 -->
+    <sql id="roleColumnSql2">
+        r.ID r_ID, r.sRoleName r_sRoleName, r.sRoleDescription r_sRoleDescription, r.nInputUserID r_nInputUserID, r.dtInputDate r_dtInputDate, r.nModifyID r_nModifyID, r.dtModifyDate r_dtModifyDate, r.nStatusID r_nStatusID
+    </sql>
+
+    <!--  用户表的列名 -->
+    <sql id="userColumnSql2" >
+        u.ID u_ID, u.sAccountNO u_sAccountNO, u.sPassword u_sPassword, u.sName u_sName, u.nStatusID u_nStatusID
+    </sql>
+
+    <!-- 通过延迟加载查询数据 -->
+    <select id="findAllLazy" resultMap="findAllMapLazy">
+        select <include refid="userColumnSql2"/> from user u where u.nStatusID > 0
+    </select>
+
+    <!-- 用户和笔记两表关联配置 -->
+    <resultMap id="findAllMapLazy" type="user">
+        <result property="ID" column="u_ID"/>
+        <result property="sAccountNO" column="u_sAccountNO"/>
+        <result property="sPassword" column="u_sPassword"/>
+        <result property="sName" column="u_sName"/>
+        <result property="nStatusID" column="u_nStatusID"/>
+        <!-- property="属性名" ofType="集合里面类的类型" -->
+        <collection property="noteList" ofType="note" column="u_ID" select="com.gg.mappers.NoteMapper.findByInputUserID" fetchType="lazy">
+            <result property="ID" column="noteID"/>
+            <result property="sTitle" column="sTitle"/>
+            <result property="ltText" column="ltText"/>
+            <result property="nInputUserID" column="nInputUserID"/>
+            <result property="dtInputDate" column="dtInputDate"/>
+            <result property="dtModifyDate" column="dtModifyDate"/>
+            <result property="nStatusID" column="nStatusID"/>
+        </collection>
+    </resultMap>
+
+</mapper>

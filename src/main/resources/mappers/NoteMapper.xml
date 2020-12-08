@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gg.mappers.NoteMapper">
+
+    <!-- 查询全部的笔记信息，并关联用户表-->
+    <select id="findAll" resultMap="noteMap">
+        select <include refid="noteColumnSql"/>,<include refid="userColumnSql"/> from note n,user u where n.nInputUserID = u.id and u.nStatusID > 0 and n.nStatusID > 0
+    </select>
+
+    <!-- 配置resultMap -->
+    <resultMap id="noteMap" type="note">
+        <result property="ID" column="noteID"/>
+        <result property="sTitle" column="sTitle"/>
+        <result property="ltText" column="ltText"/>
+        <result property="nInputUserID" column="nInputUserID"/>
+        <result property="dtInputDate" column="dtInputDate"/>
+        <result property="dtModifyDate" column="dtModifyDate"/>
+        <result property="nStatusID" column="nStatusID"/>
+        <!-- property="实体类中的属性" javaType="实体类的类型" -->
+        <association property="user" javaType="user">
+            <result property="ID" column="userID"/>
+            <result property="sAccountNO" column="sAccountNO"/>
+            <result property="sPassword" column="sPassword"/>
+            <result property="sName" column="sName"/>
+            <result property="nStatusID" column="nStatusID"/>
+        </association>
+    </resultMap>
+
+    <!--  用户表的列名 -->
+    <sql id="userColumnSql" >
+        u.ID userID, u.sAccountNO, u.sPassword, u.sName, u.nStatusID
+    </sql>
+
+    <!--笔记表的列名-->
+    <sql id="noteColumnSql" >
+        n.ID noteID, n.sTitle, n.ltText, n.nInputUserID, n.dtInputDate, n.dtModifyDate, n.nStatusID
+    </sql>
+
+    <!-- 通过延迟加载查询数据 -->
+    <select id="findAllLazy" resultMap="noteMapLazy">
+        select <include refid="noteColumnSql"/> from note n where n.nStatusID > 0
+    </select>
+
+    <resultMap id="noteMapLazy" type="note">
+        <result property="ID" column="noteID"/>
+        <result property="sTitle" column="sTitle"/>
+        <result property="ltText" column="ltText"/>
+        <result property="nInputUserID" column="nInputUserID"/>
+        <result property="dtInputDate" column="dtInputDate"/>
+        <result property="dtModifyDate" column="dtModifyDate"/>
+        <result property="nStatusID" column="nStatusID"/>
+        <!-- property="实体类中的属性" javaType="实体类的类型" fetchType="lazy" 延迟加载  ，select=""用到该数据时所要查的sql语句 column ：时作为延迟加载查询sql的参数列-->
+        <association property="user" javaType="user" column="nInputUserID" select="com.gg.mappers.UserMapper.findByID" fetchType="lazy"/>
+    </resultMap>
+
+    <select id="findByInputUserID" resultMap="findByInputUserIDMap" parameterType="int" >
+        select <include refid="noteColumnSql"/> from note n where n.nStatusID > 0 and n.nInputUserID = #{userID}
+    </select>
+
+    <resultMap id="findByInputUserIDMap" type="note">
+        <result property="ID" column="noteID"/>
+        <result property="sTitle" column="sTitle"/>
+        <result property="ltText" column="ltText"/>
+        <result property="nInputUserID" column="nInputUserID"/>
+        <result property="dtInputDate" column="dtInputDate"/>
+        <result property="dtModifyDate" column="dtModifyDate"/>
+        <result property="nStatusID" column="nStatusID"/>
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+    <!-- 定义属性文件的信息
+    <properties>
+        <property name="jdbc.driver" value="com.mysql.jdbc.Driver"/>
+        <property name="jdbc.url" value="jdbc:mysql://114.116.246.188:3306/ggbooks"/>
+        <property name="jdbc.username" value="root"/>
+        <property name="jdbc.password" value="123456"/>
+    </properties>
+    -->
+
+    <!-- 读取属性文件 -->
+    <properties resource="jdbc.properties"/>
+
+    <!-- 延迟加载配置 -->
+    <settings>
+        <!-- 开启延迟加载 -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <!-- 将积极加载改为消极加载及按需加载-->
+        <setting name="aggressiveLazyLoading" value="false"/>
+        <!-- 开启二级缓存-->
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+
+    <!-- 配置别名 -->
+    <typeAliases>
+        <!--
+            type="实体类的全路径"
+            alias="起的别名，不区分大小写"
+        
+        <typeAlias type="com.gg.entity.User" alias="user" />
+        -->
+        <!--
+            配置别名简单的写法
+            该包下的所有实体类都可以使用别名，别名就是类名，不区分大小写
+        -->
+        <package name="com.gg.entity"/>
+
+    </typeAliases>
+
+    <!-- 配置各个环境 -->
+    <environments default="mysql">
+        <!-- 配置具体的环境 -->
+        <environment id="mysql">
+            <!--
+                配置事务管理类型，JDBC：使用本地事务的策略
+                使用MySql数据库，事务管理方式
+                    1、手动提交事务/回滚事务 setAutoCommit(false);MyBatis默认的事务管理方式
+                    2、自动提交事务（Mybatis）
+             -->
+            <transactionManager type="JDBC"></transactionManager>
+            <!--
+                连接池，连接用完后会归还到连接池中，省去了创建和销毁连接的时间
+                是否要使用连接池，内置的连接池，
+                type=""取值有三种写法
+                POOLED：使用内置的连接池，对应类：org.apache.ibatis.datasource.pooled.PooledDataSource
+                UNPOOLED：不使用连接池，底层创建连接的方式，用完就销毁,对应的类:org.apache.ibatis.datasource.unpooled.UnpooledDataSource
+                JNDI:使用JNDI的方式使用连接池，表示可以使用其他的连接池
+            -->
+            <dataSource type="POOLED">
+                <property name="driver" value="${jdbc.driver}"/>
+                <property name="url" value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.username}"/>
+                <property name="password" value="${jdbc.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- 引入映射的配置文件 -->
+    <mappers>
+        <mapper resource="mappers/NoteMapper.xml" />
+        <mapper resource="mappers/UserMapper.xml" />
+        <mapper resource="mappers/RoleMapper.xml" />
+    </mappers>
+
+</configuration>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gg.mappers.RoleMapper">
+    <!-- 查询全部数据 -->
+    <select id="findAll" resultMap="findAllMap">
+        select <include refid="roleColumnSql"/>,<include refid="userColumnSql"/> from user u, role r, user_role ur where u.id = ur.userid and r.id = ur.roleid and u.nStatusID > 0 and r.nStatusID > 0 and ur.nStatusID > 0
+    </select>
+
+    <!-- 结果集封装 -->
+    <resultMap id="findAllMap" type="role">
+        <result property="ID" column="r_ID"/>
+        <result property="sRoleName" column="r_sRoleName"/>
+        <result property="sRoleDescription" column="r_sRoleDescription"/>
+        <result property="nInputUserID" column="r_nInputUserID"/>
+        <result property="dtInputDate" column="r_dtInputDate"/>
+        <result property="nModifyID" column="r_nModifyID"/>
+        <result property="dtModifyDate" column="r_dtModifyDate"/>
+        <result property="nStatusID" column="r_nStatusID"/>
+        <collection property="userList" ofType="user">
+            <result property="ID" column="u_ID"/>
+            <result property="sAccountNO" column="u_sAccountNO"/>
+            <result property="sPassword" column="u_sPassword"/>
+            <result property="sName" column="u_sName"/>
+            <result property="nStatusID" column="u_nStatusID"/>
+        </collection>
+    </resultMap>
+
+    <!-- 角色表列名 -->
+    <sql id="roleColumnSql">
+        r.ID r_ID, r.sRoleName r_sRoleName, r.sRoleDescription r_sRoleDescription, r.nInputUserID r_nInputUserID, r.dtInputDate r_dtInputDate, r.nModifyID r_nModifyID, r.dtModifyDate r_dtModifyDate, r.nStatusID r_nStatusID
+    </sql>
+
+    <!--  用户表的列名 -->
+    <sql id="userColumnSql" >
+        u.ID u_ID, u.sAccountNO u_sAccountNO, u.sPassword u_sPassword, u.sName u_sName, u.nStatusID u_nStatusID
+    </sql>
+
+</mapper>
